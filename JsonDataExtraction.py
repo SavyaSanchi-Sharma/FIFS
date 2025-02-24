@@ -14,7 +14,7 @@ class JSONExtraction:
                 matchID = data['info'].get('match_type_number', 'N/A')
                 stadium = data['info'].get('venue', 'N/A')
                 teams = data['info']['teams']
-
+                overRun=0
                 
                 BatStats = {}
                 BowlStats = {}
@@ -28,14 +28,19 @@ class JSONExtraction:
                             runs = delivery['runs']['batter']
                             extras = delivery['runs'].get('extras', 0)  
                             bowlerRun = delivery['runs']['total']
-
+                            overRun+=bowlerRun
                             if batsman not in BatStats:
-                                BatStats[batsman] = {'Runs': 0, 'Balls': 0, 'Dismissals': 0, 'StrikeRate': 0}
-                            BatStats[batsman]['Runs'] += runs
+                                BatStats[batsman] = {'Runs': 0, 'Balls': 0, 'Dismissals': 0, 'StrikeRate': 0,'Fours': 0, 'Sixes': 0}
                             BatStats[batsman]['Balls'] += 1
+                            if runs == 4:
+                                BatStats[batsman]['Fours'] += 1
+                            elif runs == 6:
+                                BatStats[batsman]['Sixes'] += 1
+                            else:
+                                BatStats[batsman]['Runs'] += runs
 
                             if bowler not in BowlStats:
-                                BowlStats[bowler] = {'BRuns': 0, 'BBalls': 0, 'Wickets': 0, 'Economy': 0, 'Catches': 0, 'Extras': 0}
+                                BowlStats[bowler] = {'BRuns': 0, 'BBalls': 0, 'Wickets': 0, 'Economy': 0, 'Catches': 0, 'Extras': 0,'Overs':0,'Maidens': 0}
                             BowlStats[bowler]['BRuns'] += bowlerRun
                             BowlStats[bowler]['BBalls'] += 1
                             BowlStats[bowler]['Extras'] += extras
@@ -63,6 +68,10 @@ class JSONExtraction:
                                                     FieldStats[fielderName]['RunOuts'] += 1
                                                 elif wicket['kind'] == 'caught and bowled':
                                                     BowlStats[bowler]['Catches'] += 1
+                                
+                            if overRun==0:
+                                bowler=over['deliveries'][0]['bowler'] 
+                                BowlStats[bowler]['Maidens'] += 1
 
                 for player, stats in BatStats.items():
                     sr = (stats['Runs'] / stats['Balls']) * 100 if stats['Balls'] > 0 else 0
@@ -72,7 +81,7 @@ class JSONExtraction:
                         'Team': teams[0] if player in teams[0] else teams[1],
                         'Player': player,
                         'Runs': stats['Runs'],
-                        'Balls': stats['Balls'],
+                        'FBalls': stats['Balls'],
                         'Dismissals': stats['Dismissals'],
                         'StrikeRate': sr,
                         'Economy': 0,
@@ -82,18 +91,23 @@ class JSONExtraction:
                         'Catches': 0,
                         'Stumpings': 0,
                         'RunOuts': 0,
-                        'Extras': 0
+                        'Extras': 0,
+                        'Fours': stats['Fours'],
+                        'Sixes': stats['Sixes'],
+                        'Overs':0,
+                        'Maidens':0
                     })
 
                 for player, stats in BowlStats.items():
-                    eco = (stats['BRuns'] / stats['BBalls']) * 6 if stats['BBalls'] > 0 else 0  
+                    eco = (stats['BRuns'] / stats['BBalls']) * 6 if stats['BBalls'] > 0 else 0
+                    overB = int(stats['BBalls'] / 6)  
                     matchdata.append({
                         'MatchID': matchID,
                         'Stadium': stadium,
                         'Team': teams[0] if player in teams[0] else teams[1],
                         'Player': player,
                         'Runs': 0,
-                        'Balls': 0,
+                        'FBalls': 0,
                         'Dismissals': 0,
                         'StrikeRate': 0,
                         'Economy': eco,
@@ -103,7 +117,11 @@ class JSONExtraction:
                         'Catches': stats['Catches'],
                         'Stumpings': 0,
                         'RunOuts': 0,
-                        'Extras': stats['Extras']
+                        'Extras': stats['Extras'],
+                        'Fours': 0,
+                        'Sixes': 0,
+                        'Overs':overB,
+                        'Maidens':stats['Maidens']
                     })
 
                 for player, stats in FieldStats.items():
@@ -113,7 +131,7 @@ class JSONExtraction:
                         'Team': teams[0] if player in teams[0] else teams[1],
                         'Player': player,
                         'Runs': 0,
-                        'Balls': 0,
+                        'FBalls': 0,
                         'Dismissals': 0,
                         'StrikeRate': 0,
                         'Economy': 0,
@@ -123,7 +141,11 @@ class JSONExtraction:
                         'Catches': stats['Catches'],
                         'Stumpings': stats['Stumpings'],
                         'RunOuts': stats['RunOuts'],
-                        'Extras': 0
+                        'Extras': 0,
+                        'Fours': 0,
+                        'Sixes': 0,
+                        'Overs':0,
+                        'Maidens':0
                     })
 
         return pd.DataFrame(matchdata)
