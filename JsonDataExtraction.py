@@ -16,7 +16,7 @@ class JSONExtraction:
                 teams = data['info']['teams']
                 overRun=0
                 date=data['info']['dates'][0]
-                
+                location = data.get('info', {}).get('city', 'Unknown') 
                 BatStats = {}
                 BowlStats = {}
                 FieldStats = {}
@@ -81,6 +81,7 @@ class JSONExtraction:
                         'Stadium': stadium,
                         'Team': teams[0] if player in teams[0] else teams[1],
                         'Date':date,
+                        'Location':location,
                         'Player': player,
                         'Runs': stats['Runs'],
                         'FBalls': stats['Balls'],
@@ -108,6 +109,7 @@ class JSONExtraction:
                         'Stadium': stadium,
                         'Team': teams[0] if player in teams[0] else teams[1],
                         'Date':date,
+                        'Location':location,
                         'Player': player,
                         'Runs': 0,
                         'FBalls': 0,
@@ -133,6 +135,7 @@ class JSONExtraction:
                         'Stadium': stadium,
                         'Team': teams[0] if player in teams[0] else teams[1],
                         'Date':date,
+                        'Location':location,
                         'Player': player,
                         'Runs': 0,
                         'FBalls': 0,
